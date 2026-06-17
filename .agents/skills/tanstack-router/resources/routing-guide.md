@@ -2,7 +2,7 @@
 
 ## File-Based Routing Patterns
 
-### Route File Conventions
+### Directory Route File Conventions
 
 ```
 routes/
@@ -17,10 +17,52 @@ routes/
 │       └── comments.tsx         # /posts/:postId/comments
 ├── users/
 │   ├── $userId.tsx              # /users/:userId
-│   └── $userId.settings.tsx     # /users/:userId/settings
+│   └── $userId/
+│       └── settings.tsx         # /users/:userId/settings
 └── _layout/                      # Layout route (no path)
     ├── dashboard.tsx            # /dashboard (uses _layout)
     └── settings.tsx             # /settings (uses _layout)
+```
+
+### Flat Route File Conventions
+
+Flat routes use dots in filenames to denote route nesting without creating directories. Use this
+when a route group is deep but narrow, or when a directory tree would make related route files
+harder to scan.
+
+```
+routes/
+├── __root.tsx                    # Root layout
+├── index.tsx                     # /
+├── about.tsx                     # /about
+├── posts.tsx                     # /posts parent/layout
+├── posts.index.tsx               # /posts
+├── posts.$postId.tsx             # /posts/:postId
+├── posts_.$postId.edit.tsx       # /posts/:postId/edit
+├── users.$userId.tsx             # /users/:userId
+├── users.$userId.settings.tsx    # /users/:userId/settings
+├── _layout.dashboard.tsx         # /dashboard (uses _layout)
+└── _layout.settings.tsx          # /settings (uses _layout)
+```
+
+### Route Mapping
+
+```
+Directory Route File Path         → URL Path
+routes/index.tsx                  → /
+routes/about.tsx                  → /about
+routes/posts/index.tsx            → /posts
+routes/posts/$postId.tsx          → /posts/:postId
+routes/posts/$postId/edit.tsx     → /posts/:postId/edit
+routes/users/$userId/settings.tsx → /users/:userId/settings
+
+Flat Route File Path              → URL Path
+routes/index.tsx                  → /
+routes/about.tsx                  → /about
+routes/posts.index.tsx            → /posts
+routes/posts.$postId.tsx          → /posts/:postId
+routes/posts_.$postId.edit.tsx    → /posts/:postId/edit
+routes/users.$userId.settings.tsx → /users/:userId/settings
 ```
 
 ### Dynamic Route Parameters

@@ -71,16 +71,44 @@ routes/
         └── posts.tsx   # /users/:userId/posts
 ```
 
+### Flat Routes
+
+Use dots in filenames to denote route nesting without creating directories. This is useful for
+deep, narrow route hierarchies where directories would add noise.
+
+```
+routes/
+├── __root.tsx                    # Root route
+├── index.tsx                     # /
+├── about.tsx                     # /about
+├── posts.tsx                     # /posts parent/layout
+├── posts.index.tsx               # /posts
+├── posts.$postId.tsx             # /posts/:postId
+├── posts_.$postId.edit.tsx       # /posts/:postId/edit
+├── settings.tsx                  # /settings parent/layout
+├── settings.profile.tsx          # /settings/profile
+└── settings.notifications.tsx    # /settings/notifications
+```
+
 ### Route Mapping
 
 ```
-File Path                        → URL Path
-routes/index.tsx                 → /
-routes/about.tsx                 → /about
-routes/posts/index.tsx           → /posts
-routes/posts/$postId.tsx         → /posts/:postId
-routes/users/$userId/index.tsx   → /users/:userId
-routes/users/$userId/posts.tsx   → /users/:userId/posts
+Directory Route File Path         → URL Path
+routes/index.tsx                  → /
+routes/about.tsx                  → /about
+routes/posts/index.tsx            → /posts
+routes/posts/$postId.tsx          → /posts/:postId
+routes/users/$userId/index.tsx    → /users/:userId
+routes/users/$userId/posts.tsx    → /users/:userId/posts
+
+Flat Route File Path              → URL Path
+routes/index.tsx                  → /
+routes/about.tsx                  → /about
+routes/posts.index.tsx            → /posts
+routes/posts.$postId.tsx          → /posts/:postId
+routes/posts_.$postId.edit.tsx    → /posts/:postId/edit
+routes/settings.profile.tsx       → /settings/profile
+routes/settings.notifications.tsx → /settings/notifications
 ```
 
 ### Layout vs. Index Routes
