@@ -14,6 +14,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write . && eslint --fix",
+    "format:staged": "lint-staged",
     "check": "prettier --check . && npm run typecheck",
     "prepare": "husky"
   },
@@ -50,6 +51,7 @@
     "eslint": "9.39.4",
     "husky": "^9.1.7",
     "jsdom": "28.1.0",
+    "lint-staged": "^17.0.7",
     "prettier": "3.8.4",
     "typescript": "6.0.3",
     "vite": "8.0.16",
@@ -60,5 +62,12 @@
       "esbuild",
       "lightningcss"
     ]
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,html,json,md,mdx,yml,yaml}": "prettier --write"
   }
 }
