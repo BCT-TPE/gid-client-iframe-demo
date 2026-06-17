@@ -30,11 +30,11 @@ function PostsList() {
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await fetchPost(params.postId);
-    return { post };
+    const post = await fetchPost(params.postId)
+    return { post }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ### Loader with Search Params
@@ -43,17 +43,17 @@ export const Route = createFileRoute('/posts/$postId')({
 export const Route = createFileRoute('/posts')({
   validateSearch: z.object({
     filter: z.enum(['all', 'published']).default('all'),
-    page: z.number().default(1)
+    page: z.number().default(1),
   }),
   loader: async ({ search }) => {
     const posts = await fetchPosts({
       filter: search.filter,
-      page: search.page
-    });
-    return { posts };
+      page: search.page,
+    })
+    return { posts }
   },
-  component: PostsList
-});
+  component: PostsList,
+})
 ```
 
 ## Advanced Loader Patterns
@@ -68,13 +68,13 @@ export const Route = createFileRoute('/dashboard')({
       fetchUser(context.userId),
       fetchStats(),
       fetchRecentPosts(),
-      fetchNotifications()
-    ]);
+      fetchNotifications(),
+    ])
 
-    return { user, stats, recentPosts, notifications };
+    return { user, stats, recentPosts, notifications }
   },
-  component: Dashboard
-});
+  component: Dashboard,
+})
 ```
 
 ### Dependent Data Loading
@@ -83,18 +83,18 @@ export const Route = createFileRoute('/dashboard')({
 export const Route = createFileRoute('/users/$userId/posts')({
   loader: async ({ params }) => {
     // First, fetch the user
-    const user = await fetchUser(params.userId);
+    const user = await fetchUser(params.userId)
 
     // Then fetch posts for that user (depends on user existing)
-    const posts = await fetchUserPosts(user.id);
+    const posts = await fetchUserPosts(user.id)
 
     // Then fetch the user's settings (depends on user)
-    const settings = await fetchUserSettings(user.id);
+    const settings = await fetchUserSettings(user.id)
 
-    return { user, posts, settings };
+    return { user, posts, settings }
   },
-  component: UserPosts
-});
+  component: UserPosts,
+})
 ```
 
 ### Conditional Loading
@@ -102,22 +102,22 @@ export const Route = createFileRoute('/users/$userId/posts')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params, context }) => {
-    const post = await fetchPost(params.postId);
+    const post = await fetchPost(params.postId)
 
     // Only fetch comments if user is authenticated
     const comments = context.auth.isAuthenticated
       ? await fetchComments(params.postId)
-      : [];
+      : []
 
     // Only fetch edit history if user can edit
     const history = context.auth.canEdit(post)
       ? await fetchEditHistory(params.postId)
-      : null;
+      : null
 
-    return { post, comments, history };
+    return { post, comments, history }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ## Error Handling in Loaders
@@ -220,16 +220,16 @@ export const Route = createFileRoute('/posts')({
   beforeLoad: ({ context }) => {
     return {
       ...context,
-      postService: new PostService(context.supabase)
-    };
+      postService: new PostService(context.supabase),
+    }
   },
   loader: async ({ context }) => {
     // context.postService is now available
-    const posts = await context.postService.getAll();
-    return { posts };
+    const posts = await context.postService.getAll()
+    return { posts }
   },
-  component: PostsList
-});
+  component: PostsList,
+})
 ```
 
 ## Integration with TanStack Query
@@ -237,7 +237,7 @@ export const Route = createFileRoute('/posts')({
 ### Using Query Client in Loaders
 
 ```typescript
-import { queryClient } from './queryClient';
+import { queryClient } from './queryClient'
 
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params, context }) => {
@@ -245,13 +245,13 @@ export const Route = createFileRoute('/posts/$postId')({
     const post = await context.queryClient.fetchQuery({
       queryKey: ['post', params.postId],
       queryFn: () => fetchPost(params.postId),
-      staleTime: 5 * 60 * 1000  // 5 minutes
-    });
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    })
 
-    return { post };
+    return { post }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ### Prefetching Related Data
@@ -259,29 +259,29 @@ export const Route = createFileRoute('/posts/$postId')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params, context }) => {
-    const { queryClient } = context;
+    const { queryClient } = context
 
     // Fetch main data
     const post = await queryClient.fetchQuery({
       queryKey: ['post', params.postId],
-      queryFn: () => fetchPost(params.postId)
-    });
+      queryFn: () => fetchPost(params.postId),
+    })
 
     // Prefetch related data (don't await)
     queryClient.prefetchQuery({
       queryKey: ['comments', params.postId],
-      queryFn: () => fetchComments(params.postId)
-    });
+      queryFn: () => fetchComments(params.postId),
+    })
 
     queryClient.prefetchQuery({
       queryKey: ['author', post.authorId],
-      queryFn: () => fetchAuthor(post.authorId)
-    });
+      queryFn: () => fetchAuthor(post.authorId),
+    })
 
-    return { post };
+    return { post }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ## Loader Optimization
@@ -289,50 +289,50 @@ export const Route = createFileRoute('/posts/$postId')({
 ### Caching Loader Results
 
 ```typescript
-const postCache = new Map<string, Post>();
+const postCache = new Map<string, Post>()
 
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
     // Check cache first
     if (postCache.has(params.postId)) {
-      return { post: postCache.get(params.postId)! };
+      return { post: postCache.get(params.postId)! }
     }
 
-    const post = await fetchPost(params.postId);
-    postCache.set(params.postId, post);
+    const post = await fetchPost(params.postId)
+    postCache.set(params.postId, post)
 
-    return { post };
+    return { post }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ### Deduplicating Requests
 
 ```typescript
-const pendingRequests = new Map<string, Promise<Post>>();
+const pendingRequests = new Map<string, Promise<Post>>()
 
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
     // If already fetching this post, return the same promise
     if (pendingRequests.has(params.postId)) {
-      const post = await pendingRequests.get(params.postId)!;
-      return { post };
+      const post = await pendingRequests.get(params.postId)!
+      return { post }
     }
 
     // Create new request
-    const promise = fetchPost(params.postId);
-    pendingRequests.set(params.postId, promise);
+    const promise = fetchPost(params.postId)
+    pendingRequests.set(params.postId, promise)
 
     try {
-      const post = await promise;
-      return { post };
+      const post = await promise
+      return { post }
     } finally {
-      pendingRequests.delete(params.postId);
+      pendingRequests.delete(params.postId)
     }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ### Stale-While-Revalidate Pattern
@@ -343,12 +343,12 @@ export const Route = createFileRoute('/posts')({
     return await context.queryClient.fetchQuery({
       queryKey: ['posts'],
       queryFn: fetchPosts,
-      staleTime: 5 * 60 * 1000,  // Consider fresh for 5 mins
-      gcTime: 10 * 60 * 1000,  // Keep in cache for 10 mins
-    });
+      staleTime: 5 * 60 * 1000, // Consider fresh for 5 mins
+      gcTime: 10 * 60 * 1000, // Keep in cache for 10 mins
+    })
   },
-  component: PostsList
-});
+  component: PostsList,
+})
 ```
 
 ## Loader Redirects
@@ -359,15 +359,15 @@ export const Route = createFileRoute('/posts')({
 export const Route = createFileRoute('/admin')({
   beforeLoad: ({ context }) => {
     if (!context.auth.isAdmin) {
-      throw redirect({ to: '/' });
+      throw redirect({ to: '/' })
     }
   },
   loader: async () => {
-    const adminData = await fetchAdminData();
-    return { adminData };
+    const adminData = await fetchAdminData()
+    return { adminData }
   },
-  component: AdminDashboard
-});
+  component: AdminDashboard,
+})
 ```
 
 ### Redirect After Data Load
@@ -375,25 +375,25 @@ export const Route = createFileRoute('/admin')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await fetchPost(params.postId);
+    const post = await fetchPost(params.postId)
 
     // Redirect if post is deleted
     if (post.status === 'deleted') {
-      throw redirect({ to: '/posts' });
+      throw redirect({ to: '/posts' })
     }
 
     // Redirect to canonical URL if slug doesn't match
     if (post.slug !== params.postId) {
       throw redirect({
         to: '/posts/$postId',
-        params: { postId: post.slug }
-      });
+        params: { postId: post.slug },
+      })
     }
 
-    return { post };
+    return { post }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ## Loader Abort Signals
@@ -405,13 +405,13 @@ export const Route = createFileRoute('/posts')({
   loader: async ({ abortController }) => {
     // Pass abort signal to fetch
     const posts = await fetch('/api/posts', {
-      signal: abortController.signal
-    }).then(res => res.json());
+      signal: abortController.signal,
+    }).then((res) => res.json())
 
-    return { posts };
+    return { posts }
   },
-  component: PostsList
-});
+  component: PostsList,
+})
 ```
 
 ### Cleanup on Navigation
@@ -419,37 +419,38 @@ export const Route = createFileRoute('/posts')({
 ```typescript
 export const Route = createFileRoute('/long-running-task')({
   loader: async ({ abortController }) => {
-    const task = startLongRunningTask();
+    const task = startLongRunningTask()
 
     // Clean up if user navigates away
     abortController.signal.addEventListener('abort', () => {
-      task.cancel();
-    });
+      task.cancel()
+    })
 
-    const result = await task.wait();
-    return { result };
+    const result = await task.wait()
+    return { result }
   },
-  component: TaskResults
-});
+  component: TaskResults,
+})
 ```
 
 ## Best Practices
 
 ### 1. Keep Loaders Pure
+
 Loaders should be pure functions without side effects (except data fetching).
 
 ```typescript
 // ✅ Good
 loader: async ({ params }) => {
-  const data = await fetchData(params.id);
-  return { data };
+  const data = await fetchData(params.id)
+  return { data }
 }
 
 // ❌ Bad (has side effects)
 loader: async ({ params }) => {
-  const data = await fetchData(params.id);
-  updateGlobalState(data);  // Side effect!
-  return { data };
+  const data = await fetchData(params.id)
+  updateGlobalState(data) // Side effect!
+  return { data }
 }
 ```
 
@@ -474,13 +475,13 @@ Don't create new service instances in loaders; use context:
 ```typescript
 // ✅ Good
 loader: async ({ context }) => {
-  return await context.postService.getAll();
+  return await context.postService.getAll()
 }
 
 // ❌ Bad
 loader: async () => {
-  const service = new PostService();  // Creating instance in loader
-  return await service.getAll();
+  const service = new PostService() // Creating instance in loader
+  return await service.getAll()
 }
 ```
 
@@ -488,32 +489,29 @@ loader: async () => {
 
 ```typescript
 // ✅ Good (parallel)
-const [user, posts] = await Promise.all([
-  fetchUser(id),
-  fetchPosts(id)
-]);
+const [user, posts] = await Promise.all([fetchUser(id), fetchPosts(id)])
 
 // ❌ Bad (sequential)
-const user = await fetchUser(id);
-const posts = await fetchPosts(id);
+const user = await fetchUser(id)
+const posts = await fetchPosts(id)
 ```
 
 ### 5. Type Loader Return Values
 
 ```typescript
 interface PostLoaderData {
-  post: Post;
-  comments: Comment[];
+  post: Post
+  comments: Comment[]
 }
 
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }): Promise<PostLoaderData> => {
     const [post, comments] = await Promise.all([
       fetchPost(params.postId),
-      fetchComments(params.postId)
-    ]);
-    return { post, comments };
+      fetchComments(params.postId),
+    ])
+    return { post, comments }
   },
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```

@@ -208,19 +208,19 @@ export const Route = createFileRoute('/dashboard')({
   beforeLoad: ({ context }) => {
     // Access auth from context
     if (!context.auth.isAuthenticated) {
-      throw redirect({ to: '/login' });
+      throw redirect({ to: '/login' })
     }
   },
   loader: async ({ context }) => {
     // Use queryClient from context
     const data = await context.queryClient.fetchQuery({
       queryKey: ['dashboard'],
-      queryFn: fetchDashboardData
-    });
-    return { data };
+      queryFn: fetchDashboardData,
+    })
+    return { data }
   },
-  component: DashboardPage
-});
+  component: DashboardPage,
+})
 ```
 
 ## Route Matching
@@ -228,6 +228,7 @@ export const Route = createFileRoute('/dashboard')({
 ### Route Rank
 
 Routes are matched in this order:
+
 1. Static routes (exact match)
 2. Dynamic routes (with params)
 3. Catch-all routes
@@ -274,25 +275,25 @@ function PostLink({ postId }: { postId: string }) {
 ```typescript
 export const Route = createFileRoute('/admin/users')({
   beforeLoad: async ({ context, location }) => {
-    const { auth } = context;
+    const { auth } = context
 
     // Check authentication
     if (!auth.isAuthenticated) {
       throw redirect({
         to: '/login',
         search: {
-          redirect: location.href
-        }
-      });
+          redirect: location.href,
+        },
+      })
     }
 
     // Check permissions
     if (!auth.hasPermission('admin')) {
-      throw redirect({ to: '/forbidden' });
+      throw redirect({ to: '/forbidden' })
     }
   },
-  component: AdminUsersPage
-});
+  component: AdminUsersPage,
+})
 ```
 
 ### Conditional Redirects
@@ -300,20 +301,20 @@ export const Route = createFileRoute('/admin/users')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId/edit')({
   beforeLoad: async ({ params, context }) => {
-    const post = await fetchPost(params.postId);
-    const canEdit = await context.auth.canEdit(post);
+    const post = await fetchPost(params.postId)
+    const canEdit = await context.auth.canEdit(post)
 
     if (!canEdit) {
       throw redirect({
         to: '/posts/$postId',
-        params: { postId: params.postId }
-      });
+        params: { postId: params.postId },
+      })
     }
 
-    return { post };
+    return { post }
   },
-  component: EditPost
-});
+  component: EditPost,
+})
 ```
 
 ## Error Handling
@@ -359,39 +360,39 @@ export const Route = createFileRoute('/posts')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await fetchPost(params.postId);
-    return { post };
+    const post = await fetchPost(params.postId)
+    return { post }
   },
   meta: ({ loaderData }) => [
     { title: loaderData.post.title },
     { name: 'description', content: loaderData.post.excerpt },
     { property: 'og:title', content: loaderData.post.title },
-    { property: 'og:image', content: loaderData.post.image }
+    { property: 'og:image', content: loaderData.post.image },
   ],
-  component: PostDetails
-});
+  component: PostDetails,
+})
 ```
 
 ### Route Validation
 
 ```typescript
-import { z } from 'zod';
+import { z } from 'zod'
 
 const PostSearchSchema = z.object({
   filter: z.enum(['all', 'published', 'draft']).default('all'),
   sort: z.enum(['date', 'title', 'views']).default('date'),
-  page: z.number().int().positive().default(1)
-});
+  page: z.number().int().positive().default(1),
+})
 
 export const Route = createFileRoute('/posts')({
   validateSearch: (search) => PostSearchSchema.parse(search),
   loader: async ({ search }) => {
     // search is now type-safe and validated
-    const posts = await fetchPosts(search);
-    return { posts };
+    const posts = await fetchPosts(search)
+    return { posts }
   },
-  component: PostsList
-});
+  component: PostsList,
+})
 ```
 
 ### Parallel Data Loading
@@ -404,31 +405,37 @@ export const Route = createFileRoute('/dashboard')({
       fetchStats(),
       fetchRecentPosts(),
       fetchNotifications(),
-      fetchUser(context.auth.userId)
-    ]);
+      fetchUser(context.auth.userId),
+    ])
 
-    return { stats, recentPosts, notifications, user };
+    return { stats, recentPosts, notifications, user }
   },
-  component: Dashboard
-});
+  component: Dashboard,
+})
 ```
 
 ## Best Practices
 
 ### 1. Use File-Based Routing
+
 Prefer file-based routing over manual route configuration for better organization and type safety.
 
 ### 2. Colocate Route Data Loading
+
 Keep loaders close to the components that use them for better maintainability.
 
 ### 3. Handle Loading and Error States
+
 Always provide `pendingComponent` and `errorComponent` for better UX.
 
 ### 4. Validate Search Params
+
 Use Zod or similar for runtime validation of search parameters.
 
 ### 5. Preload Critical Routes
+
 Preload routes on hover or mount for faster navigation.
 
 ### 6. Use Layouts Effectively
-Leverage pathless layouts (_layout) to avoid prop drilling and centralize auth logic.
+
+Leverage pathless layouts (\_layout) to avoid prop drilling and centralize auth logic.

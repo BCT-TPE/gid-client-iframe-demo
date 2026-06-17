@@ -161,12 +161,12 @@ function PostDetails() {
 // routes/users/$userId/posts/$postId.tsx
 export const Route = createFileRoute('/users/$userId/posts/$postId')({
   loader: async ({ params }) => {
-    const { userId, postId } = params;
-    const post = await postsApi.getByUserAndId(userId, postId);
-    return { post };
+    const { userId, postId } = params
+    const post = await postsApi.getByUserAndId(userId, postId)
+    return { post }
   },
   component: UserPostDetails,
-});
+})
 ```
 
 ---
@@ -185,11 +185,11 @@ visit can redirect to `/app` before the callback component reads search params o
 ```typescript
 export const Route = createFileRoute('/posts')({
   loader: async () => {
-    const posts = await postsApi.getAll();
-    return { posts };
+    const posts = await postsApi.getAll()
+    return { posts }
   },
   component: PostsPage,
-});
+})
 ```
 
 ### Loader with Dependencies
@@ -200,11 +200,11 @@ export const Route = createFileRoute('/users/$userId/posts')({
     const [user, posts] = await Promise.all([
       userApi.get(params.userId),
       postsApi.getByUser(params.userId),
-    ]);
-    return { user, posts };
+    ])
+    return { user, posts }
   },
   component: UserPosts,
-});
+})
 ```
 
 ### Loader Error Handling
@@ -253,14 +253,14 @@ navigate({ to: '/posts', search: { filter: 'published' } });
 
 ```typescript
 // routes/posts/index.tsx
-import { createFileRoute } from '@tanstack/react-router';
-import { lazy } from 'react';
+import { createFileRoute } from '@tanstack/react-router'
+import { lazy } from 'react'
 
-const PostsPage = lazy(() => import('~/features/posts/PostsPage'));
+const PostsPage = lazy(() => import('~/features/posts/PostsPage'))
 
 export const Route = createFileRoute('/posts')({
   component: PostsPage,
-});
+})
 ```
 
 ### Lazy Loader
@@ -269,13 +269,13 @@ export const Route = createFileRoute('/posts')({
 export const Route = createFileRoute('/posts')({
   loader: async () => {
     // Dynamically import heavy module only when route loads
-    const { processData } = await import('~/lib/heavyModule');
-    const posts = await postsApi.getAll();
-    const processed = processData(posts);
-    return { posts: processed };
+    const { processData } = await import('~/lib/heavyModule')
+    const posts = await postsApi.getAll()
+    const processed = processData(posts)
+    return { posts: processed }
   },
   component: PostsPage,
-});
+})
 ```
 
 ---
@@ -412,11 +412,11 @@ export const Route = createFileRoute('/admin')({
       throw redirect({
         to: '/login',
         search: { redirect: '/admin' },
-      });
+      })
     }
   },
   component: AdminPage,
-});
+})
 ```
 
 ### Permission Guard
@@ -425,11 +425,11 @@ export const Route = createFileRoute('/admin')({
 export const Route = createFileRoute('/admin/users')({
   beforeLoad: async ({ context }) => {
     if (!context.auth.hasPermission('users:manage')) {
-      throw redirect({ to: '/unauthorized' });
+      throw redirect({ to: '/unauthorized' })
     }
   },
   component: UsersPage,
-});
+})
 ```
 
 ---
@@ -441,8 +441,8 @@ export const Route = createFileRoute('/admin/users')({
 ```typescript
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
-    const post = await postsApi.get(params.postId);
-    return { post };
+    const post = await postsApi.get(params.postId)
+    return { post }
   },
   meta: ({ loaderData }) => [
     { title: 'Home', path: '/' },
@@ -450,7 +450,7 @@ export const Route = createFileRoute('/posts/$postId')({
     { title: loaderData.post.title, path: `/posts/${loaderData.post.id}` },
   ],
   component: PostDetails,
-});
+})
 ```
 
 ---
@@ -485,11 +485,11 @@ function PostsPage() {
 
 ```typescript
 // ✅ Good: Lazy load admin panel
-const AdminPanel = lazy(() => import('~/features/admin/AdminPanel'));
+const AdminPanel = lazy(() => import('~/features/admin/AdminPanel'))
 
 export const Route = createFileRoute('/admin')({
   component: AdminPanel,
-});
+})
 ```
 
 ### 3. Type-Safe Navigation
@@ -509,6 +509,7 @@ export const Route = createFileRoute('/admin')({
 ## Additional Resources
 
 For more patterns, see:
+
 - [routing-guide.md](resources/routing-guide.md) - Advanced routing
 - [navigation-patterns.md](resources/navigation-patterns.md) - Navigation strategies
 - [route-loaders.md](resources/route-loaders.md) - Complex loaders
