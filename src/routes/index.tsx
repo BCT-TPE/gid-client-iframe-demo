@@ -21,6 +21,13 @@ signInUrl.search = new URLSearchParams({
   callback_uri: callbackUri,
 }).toString()
 
+const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+  window.location.hostname,
+)
+
+const iframeAllow =
+  import.meta.env.DEV || isLocalhost ? 'local-network-access' : undefined
+
 function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -31,6 +38,7 @@ function Home() {
         <DialogContent className="grid h-[min(760px,calc(100vh-2rem))] max-w-[min(960px,calc(100%-2rem))] grid-rows-[auto_minmax(0,1fr)] gap-3 p-3">
           <DialogTitle className="pr-10">Giant ID sign in</DialogTitle>
           <iframe
+            allow={iframeAllow}
             className="h-full min-h-0 w-full rounded-lg border"
             src={signInUrl.toString()}
             title="Giant ID sign in"
