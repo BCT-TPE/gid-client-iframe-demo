@@ -17,7 +17,7 @@ const callbackUri =
 const signInUrl = new URL('https://staging.gid.giantcycling.com/oauth/sign-in/')
 
 signInUrl.search = new URLSearchParams({
-  client_id: '2arj0uljj696sqjff07eadspef',
+  client_id: '3tddp22horis0i6p5ippfrh57m',
   callback_uri: callbackUri,
 }).toString()
 
