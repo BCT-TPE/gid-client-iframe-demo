@@ -27,11 +27,16 @@ const callbackUri =
   import.meta.env.VITE_GID_CALLBACK_URI ||
   `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`
 
-const signInUrl = new URL('https://staging.gid.giantcycling.com/oauth/sign-in/')
+const clientId =
+  import.meta.env.VITE_GID_CLIENT_ID || '2arj0uljj696sqjff07eadspef'
+const signInUrl = new URL(
+  'https://giant-id-staging.auth.ap-northeast-1.amazoncognito.com/login',
+)
 
 signInUrl.search = new URLSearchParams({
-  client_id: '3tddp22horis0i6p5ippfrh57m',
-  callback_uri: callbackUri,
+  client_id: clientId,
+  response_type: 'code',
+  redirect_uri: callbackUri,
 }).toString()
 
 const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
