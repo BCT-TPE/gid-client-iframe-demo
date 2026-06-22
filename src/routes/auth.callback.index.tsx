@@ -6,7 +6,7 @@ export const Route = createFileRoute('/auth/callback/')({
 })
 
 const clientId =
-  import.meta.env.VITE_GID_CLIENT_ID || '2arj0uljj696sqjff07eadspef'
+  import.meta.env.VITE_GID_CLIENT_ID || '3tddp22horis0i6p5ippfrh57m'
 const tokenEndpoint =
   import.meta.env.VITE_GID_TOKEN_ENDPOINT ||
   'https://giant-id-staging-auth.gid.giantcycling.com/oauth2/token'
