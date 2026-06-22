@@ -141,4 +141,8 @@ body {
   html {
     @apply font-sans;
   }
+
+  .registration-input {
+    @apply w-full max-w-[440px] rounded border border-[#bbbbbb] bg-white px-3 py-3 text-[15px] text-[#333333] outline-none focus:border-[#06038d];
+  }
 }
