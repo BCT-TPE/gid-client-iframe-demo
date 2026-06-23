@@ -8,6 +8,7 @@ export const Route = createFileRoute('/auth/callback/')({
 const tokenEndpoint =
   import.meta.env.VITE_GID_TOKEN_ENDPOINT ||
   'https://staging-api.gid.giantcycling.com/v1/user-token'
+const userTokenApiKey = '5zmMaCJTFpa2VfvSV5uoI1rcsFDNZaXoHzAmM7F9'
 const redirectUri =
   import.meta.env.VITE_GID_CALLBACK_URI ||
   `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`
@@ -49,6 +50,9 @@ function AuthCallback() {
       try {
         const response = await fetch(tokenExchangeUrl, {
           method: 'GET',
+          headers: {
+            'x-api-key': userTokenApiKey,
+          },
           signal: abortController.signal,
         })
         const responseText = await response.text()
