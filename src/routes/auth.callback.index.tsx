@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 
 export const Route = createFileRoute('/auth/callback/')({
   component: AuthCallback,
@@ -9,28 +9,13 @@ const tokenEndpoint =
   import.meta.env.VITE_GID_TOKEN_ENDPOINT ||
   'https://staging-api.gid.giantcycling.com/v1/user-token'
 const userTokenApiKey = '5zmMaCJTFpa2VfvSV5uoI1rcsFDNZaXoHzAmM7F9'
-const redirectUri =
-  import.meta.env.VITE_GID_CALLBACK_URI ||
-  `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`
-
-type TokenExchangeState =
-  | { status: 'idle'; data?: undefined; error?: undefined }
-  | { status: 'loading'; data?: undefined; error?: undefined }
-  | { status: 'success'; data: unknown; error?: undefined }
-  | { status: 'error'; data?: undefined; error: string }
 
 function AuthCallback() {
-  const { code, state } = useMemo(() => {
+  const code = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
 
-    return {
-      code: params.get('code'),
-      state: params.get('state'),
-    }
+    return params.get('code')
   }, [])
-  const [tokenExchange, setTokenExchange] = useState<TokenExchangeState>({
-    status: 'idle',
-  })
 
   useEffect(() => {
     if (!code) {
@@ -41,8 +26,6 @@ function AuthCallback() {
     const codeValue = code
 
     async function exchangeCodeForToken() {
-      setTokenExchange({ status: 'loading' })
-
       const tokenExchangeUrl = new URL(tokenEndpoint)
 
       tokenExchangeUrl.searchParams.set('code', codeValue)
@@ -65,10 +48,7 @@ function AuthCallback() {
         }
 
         if (!response.ok) {
-          setTokenExchange({
-            status: 'error',
-            error: JSON.stringify(responseBody, null, 2),
-          })
+          console.error('Giant ID token exchange failed', responseBody)
           return
         }
 
@@ -79,16 +59,12 @@ function AuthCallback() {
           },
           window.location.origin,
         )
-        setTokenExchange({ status: 'success', data: responseBody })
       } catch (error) {
         if (abortController.signal.aborted) {
           return
         }
 
-        setTokenExchange({
-          status: 'error',
-          error: error instanceof Error ? error.message : String(error),
-        })
+        console.error('Giant ID token exchange failed', error)
       }
     }
 
@@ -99,67 +75,5 @@ function AuthCallback() {
     }
   }, [code])
 
-  const tokenExchangeResult = useMemo(() => {
-    if (tokenExchange.status === 'success') {
-      return JSON.stringify(tokenExchange.data, null, 2)
-    }
-
-    if (tokenExchange.status === 'error') {
-      return tokenExchange.error
-    }
-
-    if (tokenExchange.status === 'loading') {
-      return 'Exchanging authorization code for tokens...'
-    }
-
-    return code ? 'Waiting to exchange code.' : 'No code received.'
-  }, [code, tokenExchange])
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <div className="flex w-full max-w-2xl flex-col gap-2">
-        <h1 className="text-xl font-semibold">AUTH CALLBACK</h1>
-        <p className="text-sm text-muted-foreground">
-          Giant ID redirected back to this callback page.
-        </p>
-      </div>
-
-      <section className="flex w-full max-w-2xl flex-col gap-3 rounded-lg border bg-card p-4 text-left text-card-foreground">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium">Authorization code</h2>
-          <pre className="min-h-12 overflow-auto rounded-md bg-muted p-3 text-xs break-all whitespace-pre-wrap">
-            {code || 'No code received.'}
-          </pre>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium">State</h2>
-          <pre className="min-h-12 overflow-auto rounded-md bg-muted p-3 text-xs break-all whitespace-pre-wrap">
-            {state || 'No state received.'}
-          </pre>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium">Token endpoint</h2>
-          <pre className="min-h-12 overflow-auto rounded-md bg-muted p-3 text-xs break-all whitespace-pre-wrap">
-            {tokenEndpoint}
-          </pre>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium">Redirect URI</h2>
-          <pre className="min-h-12 overflow-auto rounded-md bg-muted p-3 text-xs break-all whitespace-pre-wrap">
-            {redirectUri}
-          </pre>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium">Token exchange result</h2>
-          <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 text-xs break-all whitespace-pre-wrap">
-            {tokenExchangeResult}
-          </pre>
-        </div>
-      </section>
-    </main>
-  )
+  return null
 }
