@@ -9,6 +9,9 @@ const tokenEndpoint =
   import.meta.env.VITE_GID_TOKEN_ENDPOINT ||
   'https://staging-api.gid.giantcycling.com/v1/user-token'
 const userTokenApiKey = '5zmMaCJTFpa2VfvSV5uoI1rcsFDNZaXoHzAmM7F9'
+const authSessionStorageKey = 'gid-auth-token'
+const authReturnStepStorageKey = 'gid-auth-return-step'
+const appHomeUrl = new URL(import.meta.env.BASE_URL, window.location.origin)
 
 function AuthCallback() {
   const code = useMemo(() => {
@@ -52,13 +55,23 @@ function AuthCallback() {
           return
         }
 
-        window.parent.postMessage(
-          {
-            type: 'gid-auth-success',
-            token: responseBody,
-          },
-          window.location.origin,
+        if (window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: 'gid-auth-success',
+              token: responseBody,
+            },
+            window.location.origin,
+          )
+          return
+        }
+
+        window.sessionStorage.setItem(
+          authSessionStorageKey,
+          JSON.stringify(responseBody),
         )
+        window.sessionStorage.setItem(authReturnStepStorageKey, '3')
+        window.location.replace(appHomeUrl)
       } catch (error) {
         if (abortController.signal.aborted) {
           return

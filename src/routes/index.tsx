@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CheckIcon,
@@ -83,6 +84,11 @@ const retailers = [
 ]
 
 const authSessionStorageKey = 'gid-auth-token'
+const authReturnStepStorageKey = 'gid-auth-return-step'
+const selectedProposalStorageKey = 'gid-selected-proposal'
+const authReturnScrollYStorageKey = 'gid-auth-return-scroll-y'
+
+type Proposal = 'A' | 'B'
 
 type GiantAuthMessage = {
   type: 'gid-auth-success'
@@ -249,13 +255,56 @@ const getStoredContactInfo = () => {
   }
 }
 
+const consumeStoredReturnStep = () => {
+  const storedStep = window.sessionStorage.getItem(authReturnStepStorageKey)
+
+  if (!storedStep) {
+    return null
+  }
+
+  window.sessionStorage.removeItem(authReturnStepStorageKey)
+
+  const step = Number(storedStep)
+
+  return Number.isInteger(step) ? step : null
+}
+
+const getStoredProposal = (): Proposal => {
+  const storedProposal = window.sessionStorage.getItem(
+    selectedProposalStorageKey,
+  )
+
+  return storedProposal === 'B' ? 'B' : 'A'
+}
+
+const consumeStoredReturnScrollY = () => {
+  const storedScrollY = window.sessionStorage.getItem(
+    authReturnScrollYStorageKey,
+  )
+
+  if (!storedScrollY) {
+    return null
+  }
+
+  window.sessionStorage.removeItem(authReturnScrollYStorageKey)
+
+  const scrollY = Number(storedScrollY)
+
+  return Number.isFinite(scrollY) ? Math.max(scrollY, 0) : null
+}
+
 function Home() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [activeStep, setActiveStep] = useState(1)
+  const returnScrollYRef = useRef<number | null>(consumeStoredReturnScrollY())
+  const [activeStep, setActiveStep] = useState(() => {
+    const returnStep = consumeStoredReturnStep()
+
+    return returnStep ? Math.min(Math.max(returnStep, 1), steps.length) : 1
+  })
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(() =>
     getStoredContactInfo(),
   )
-  const [proposal, setProposal] = useState<'A' | 'B'>('A')
+  const [proposal, setProposal] = useState<Proposal>(() => getStoredProposal())
   const [showContactForm, setShowContactForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -263,6 +312,26 @@ function Home() {
     window.sessionStorage.setItem(authSessionStorageKey, JSON.stringify(token))
     setContactInfo(getContactInfoFromToken(token))
     setActiveStep(3)
+  }, [])
+
+  useEffect(() => {
+    const returnScrollY = returnScrollYRef.current
+
+    if (returnScrollY === null) {
+      return
+    }
+
+    returnScrollYRef.current = null
+
+    const frameId = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: returnScrollY })
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
   }, [])
 
   useEffect(() => {
@@ -295,6 +364,16 @@ function Home() {
 
   const goToStep = (step: number) => {
     setActiveStep(Math.min(Math.max(step, 1), steps.length))
+  }
+
+  const startRedirectSignIn = () => {
+    window.sessionStorage.setItem(authReturnStepStorageKey, '3')
+    window.sessionStorage.setItem(selectedProposalStorageKey, 'B')
+    window.sessionStorage.setItem(
+      authReturnScrollYStorageKey,
+      String(window.scrollY),
+    )
+    window.location.assign(signInUrl.toString())
   }
 
   return (
@@ -499,13 +578,9 @@ function Home() {
                       ))}
                     </ul>
                     <div className="mt-auto">
-                      <GiantIdDialog
-                        handleIframeLoad={handleIframeLoad}
-                        iframeRef={iframeRef}
-                        onAuthSuccess={handleAuthSuccess}
-                      >
+                      <GiantIdActionButton onClick={startRedirectSignIn}>
                         Log in
-                      </GiantIdDialog>
+                      </GiantIdActionButton>
                     </div>
                   </div>
                   <div className="flex flex-col rounded-xl border border-[#e2e2e2] bg-white p-5">
@@ -777,6 +852,7 @@ function Home() {
             )}
             key={option}
             onClick={() => {
+              window.sessionStorage.setItem(selectedProposalStorageKey, option)
               setProposal(option)
               setShowContactForm(false)
             }}
@@ -789,6 +865,34 @@ function Home() {
     </main>
   )
 }
+
+type GiantIdActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'button' | 'link'
+}
+
+const GiantIdActionButton = forwardRef<
+  HTMLButtonElement,
+  GiantIdActionButtonProps
+>(function GiantIdActionButton(
+  { children, className, type = 'button', variant = 'button', ...props },
+  ref,
+) {
+  return (
+    <button
+      className={cn(
+        variant === 'button'
+          ? 'inline-flex min-h-10 w-fit items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#222222]'
+          : 'text-sm hover:underline',
+        className,
+      )}
+      ref={ref}
+      type={type}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+})
 
 function GiantIdDialog({
   children,
@@ -833,16 +937,7 @@ function GiantIdDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          className={cn(
-            variant === 'button'
-              ? 'inline-flex min-h-10 w-fit items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-[#222222]'
-              : 'text-sm hover:underline',
-          )}
-          type="button"
-        >
-          {children}
-        </button>
+        <GiantIdActionButton variant={variant}>{children}</GiantIdActionButton>
       </DialogTrigger>
       <DialogContent className="grid h-[min(680px,calc(100vh-2rem))] w-[min(546px,calc(100%-2rem))] max-w-none grid-rows-[minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-none">
         <DialogTitle className="sr-only">Giant ID sign in</DialogTitle>
