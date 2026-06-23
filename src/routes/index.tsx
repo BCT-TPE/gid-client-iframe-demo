@@ -528,8 +528,11 @@ function Home() {
                         'Online claims',
                         'Saved details',
                       ].map((benefit) => (
-                        <li className="flex items-start gap-2" key={benefit}>
-                          <CheckIcon className="mt-0.5 text-[#06038d]" />
+                        <li
+                          className="grid grid-cols-[22px_minmax(0,1fr)] items-start gap-2"
+                          key={benefit}
+                        >
+                          <CheckIcon className="mt-0.5 size-[18px] text-[#06038d]" />
                           <span>{benefit}</span>
                         </li>
                       ))}
@@ -571,8 +574,11 @@ function Home() {
                         'Faster registration next time',
                         'One account across Giant, Liv, Momentum and CADEX',
                       ].map((benefit) => (
-                        <li className="flex items-start gap-2" key={benefit}>
-                          <CheckIcon className="mt-0.5 text-[#06038d]" />
+                        <li
+                          className="grid grid-cols-[22px_minmax(0,1fr)] items-start gap-2"
+                          key={benefit}
+                        >
+                          <CheckIcon className="mt-0.5 size-[18px] text-[#06038d]" />
                           <span>{benefit}</span>
                         </li>
                       ))}
