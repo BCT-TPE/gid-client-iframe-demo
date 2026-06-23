@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CheckIcon,
@@ -67,6 +67,21 @@ const steps = [
   'Confirmation',
 ]
 
+const authSessionStorageKey = 'gid-auth-token'
+
+type GiantAuthMessage = {
+  type: 'gid-auth-success'
+  token: unknown
+}
+
+const isGiantAuthMessage = (value: unknown): value is GiantAuthMessage => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  return (value as { type?: unknown }).type === 'gid-auth-success'
+}
+
 function Home() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [iframeUrl, setIframeUrl] = useState(signInUrl.toString())
@@ -74,7 +89,45 @@ function Home() {
   const [proposal, setProposal] = useState<'A' | 'B'>('A')
   const [showContactForm, setShowContactForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [authToken, setAuthToken] = useState<unknown>(() => {
+    const storedToken = window.sessionStorage.getItem(authSessionStorageKey)
+
+    if (!storedToken) {
+      return null
+    }
+
+    try {
+      return JSON.parse(storedToken)
+    } catch {
+      return storedToken
+    }
+  })
   const displayIframeUrl = decodeUrlForDisplay(iframeUrl)
+
+  const handleAuthSuccess = useCallback((token: unknown) => {
+    setAuthToken(token)
+    window.sessionStorage.setItem(authSessionStorageKey, JSON.stringify(token))
+  }, [])
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin) {
+        return
+      }
+
+      if (!isGiantAuthMessage(event.data)) {
+        return
+      }
+
+      handleAuthSuccess(event.data.token)
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [handleAuthSuccess])
 
   const handleIframeLoad = useCallback(() => {
     try {
@@ -207,6 +260,7 @@ function Home() {
                   displayIframeUrl={displayIframeUrl}
                   handleIframeLoad={handleIframeLoad}
                   iframeRef={iframeRef}
+                  onAuthSuccess={handleAuthSuccess}
                   variant="link"
                 >
                   <span className="text-[#333333]">
@@ -248,6 +302,7 @@ function Home() {
                     displayIframeUrl={displayIframeUrl}
                     handleIframeLoad={handleIframeLoad}
                     iframeRef={iframeRef}
+                    onAuthSuccess={handleAuthSuccess}
                   >
                     Sign in or create account
                   </GiantIdDialog>
@@ -292,6 +347,7 @@ function Home() {
                       displayIframeUrl={displayIframeUrl}
                       handleIframeLoad={handleIframeLoad}
                       iframeRef={iframeRef}
+                      onAuthSuccess={handleAuthSuccess}
                     >
                       Log in
                     </GiantIdDialog>
@@ -364,6 +420,13 @@ function Home() {
               </>
             ) : null}
           </RegistrationStep>
+
+          {authToken ? (
+            <div className="mt-5 rounded-lg border border-[#2e7d32]/20 bg-[#e8f5e9] px-5 py-4 text-sm text-[#1b5e20]">
+              Giant ID token received. The iframe dialog was closed and the
+              token is available in this tab's session storage.
+            </div>
+          ) : null}
 
           <RegistrationStep activeStep={activeStep} index={3} title={steps[2]}>
             <p className="mb-4 text-sm text-[#555555]">
@@ -544,16 +607,45 @@ function GiantIdDialog({
   displayIframeUrl,
   handleIframeLoad,
   iframeRef,
+  onAuthSuccess,
   variant = 'button',
 }: {
   children: React.ReactNode
   displayIframeUrl: string
   handleIframeLoad: () => void
   iframeRef: React.RefObject<HTMLIFrameElement | null>
+  onAuthSuccess: (token: unknown) => void
   variant?: 'button' | 'link'
 }) {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const handleMessage = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin) {
+        return
+      }
+
+      if (!isGiantAuthMessage(event.data)) {
+        return
+      }
+
+      onAuthSuccess(event.data.token)
+      setOpen(false)
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [onAuthSuccess, open])
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
           className={cn(

@@ -5,11 +5,9 @@ export const Route = createFileRoute('/auth/callback/')({
   component: AuthCallback,
 })
 
-const clientId =
-  import.meta.env.VITE_GID_CLIENT_ID || '3tddp22horis0i6p5ippfrh57m'
 const tokenEndpoint =
   import.meta.env.VITE_GID_TOKEN_ENDPOINT ||
-  'https://giant-id-staging-auth.gid.giantcycling.com/oauth2/token'
+  'https://staging-api.gid.giantcycling.com/v1/user-token'
 const redirectUri =
   import.meta.env.VITE_GID_CALLBACK_URI ||
   `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`
@@ -44,20 +42,13 @@ function AuthCallback() {
     async function exchangeCodeForToken() {
       setTokenExchange({ status: 'loading' })
 
-      const body = new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: clientId,
-        code: codeValue,
-        redirect_uri: redirectUri,
-      })
+      const tokenExchangeUrl = new URL(tokenEndpoint)
+
+      tokenExchangeUrl.searchParams.set('code', codeValue)
 
       try {
-        const response = await fetch(tokenEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body,
+        const response = await fetch(tokenExchangeUrl, {
+          method: 'GET',
           signal: abortController.signal,
         })
         const responseText = await response.text()
@@ -77,6 +68,13 @@ function AuthCallback() {
           return
         }
 
+        window.parent.postMessage(
+          {
+            type: 'gid-auth-success',
+            token: responseBody,
+          },
+          window.location.origin,
+        )
         setTokenExchange({ status: 'success', data: responseBody })
       } catch (error) {
         if (abortController.signal.aborted) {
