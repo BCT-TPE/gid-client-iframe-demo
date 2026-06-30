@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ChangeEventHandler } from 'react'
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import {
@@ -10,7 +10,6 @@ import {
   UserIcon,
 } from 'lucide-react'
 
-import { Button } from '#/components/ui/button.tsx'
 import {
   Dialog,
   DialogContent,
@@ -89,6 +88,7 @@ const selectedProposalStorageKey = 'gid-selected-proposal'
 const authReturnScrollYStorageKey = 'gid-auth-return-scroll-y'
 
 type Proposal = 'A' | 'B'
+type PurchaseSource = 'authorized-retailer' | 'elsewhere'
 
 type GiantAuthMessage = {
   type: 'gid-auth-success'
@@ -305,6 +305,11 @@ function Home() {
     getStoredContactInfo(),
   )
   const [proposal, setProposal] = useState<Proposal>(() => getStoredProposal())
+  const [purchaseSource, setPurchaseSource] = useState<PurchaseSource>(
+    'authorized-retailer',
+  )
+  const [purchaseDetail, setPurchaseDetail] = useState('Online marketplace')
+  const [purchaseDate, setPurchaseDate] = useState('2026-06-02')
   const [showContactForm, setShowContactForm] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -667,34 +672,54 @@ function Home() {
               </p>
               <div className="mb-6 flex flex-col gap-4">
                 <RadioRow
-                  defaultChecked
+                  checked={purchaseSource === 'authorized-retailer'}
                   label="Yes, that is correct — I bought it from a Giant authorized retailer."
                   name="purchase"
+                  onChange={() => setPurchaseSource('authorized-retailer')}
+                  value="authorized-retailer"
                 />
                 <RadioRow
+                  checked={purchaseSource === 'elsewhere'}
                   label="No, I got the bike somewhere else."
                   name="purchase"
+                  onChange={() => setPurchaseSource('elsewhere')}
+                  value="elsewhere"
                 />
               </div>
-              <FormLabel label="Select the retailer where you bought the product" />
-              <div className="mb-4 flex max-w-[660px] items-stretch">
-                <input
-                  className="min-w-0 flex-1 rounded-l border border-r-0 border-[#bbbbbb] px-4 py-3 text-[15px] text-[#333333] outline-none placeholder:text-[#777777] focus:border-[#06038d]"
-                  placeholder="Search by zipcode or city"
-                  type="text"
-                />
-                <button
-                  className="inline-flex min-w-[132px] items-center justify-center rounded-r bg-[#06038d] px-8 py-3 text-[16px] font-bold text-white transition-colors hover:bg-[#04026b]"
-                  type="button"
-                >
-                  Search
-                </button>
-              </div>
-              <div className="mb-7 flex max-w-[760px] flex-col gap-3">
-                {retailers.map((retailer) => (
-                  <RetailerCard key={retailer.name} retailer={retailer} />
-                ))}
-              </div>
+              {purchaseSource === 'authorized-retailer' ? (
+                <>
+                  <FormLabel label="Select the retailer where you bought the product" />
+                  <div className="mb-4 flex max-w-[660px] items-stretch">
+                    <input
+                      className="min-w-0 flex-1 rounded-l border border-r-0 border-[#bbbbbb] px-4 py-3 text-[15px] text-[#333333] outline-none placeholder:text-[#777777] focus:border-[#06038d]"
+                      placeholder="Search by zipcode or city"
+                      type="text"
+                    />
+                    <button
+                      className="inline-flex min-w-[132px] items-center justify-center rounded-r bg-[#06038d] px-8 py-3 text-[16px] font-bold text-white transition-colors hover:bg-[#04026b]"
+                      type="button"
+                    >
+                      Search
+                    </button>
+                  </div>
+                  <div className="mb-7 flex max-w-[760px] flex-col gap-3">
+                    {retailers.map((retailer) => (
+                      <RetailerCard key={retailer.name} retailer={retailer} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="mb-7">
+                  <FormLabel label="Please describe where you bought it" />
+                  <input
+                    className="registration-input"
+                    onChange={(event) => setPurchaseDetail(event.target.value)}
+                    placeholder="e.g. online marketplace, second-hand, etc."
+                    type="text"
+                    value={purchaseDetail}
+                  />
+                </div>
+              )}
               <StepButtons
                 onBack={() => goToStep(2)}
                 onProceed={() => goToStep(4)}
@@ -709,8 +734,13 @@ function Home() {
               <p className="mb-4 text-sm text-[#555555]">
                 Please select your purchase date.
               </p>
-              <TextField label="Purchase date" type="date" />
-              <TextField label="Proof of purchase (optional)" type="text" />
+              <TextField
+                label="Purchase date"
+                onChange={(event) => setPurchaseDate(event.target.value)}
+                type="date"
+                value={purchaseDate}
+              />
+              <FileField label="Proof of purchase (optional)" />
               <StepButtons
                 onBack={() => goToStep(3)}
                 onProceed={() => goToStep(5)}
@@ -722,7 +752,13 @@ function Home() {
               index={5}
               title={steps[4]}
             >
-              <label className="flex items-start gap-2 text-sm text-[#555555]">
+              <ConfirmationSummary
+                contactInfo={contactInfo}
+                purchaseDate={purchaseDate}
+                purchaseDetail={purchaseDetail}
+                purchaseSource={purchaseSource}
+              />
+              <label className="mt-4 flex items-start gap-3 text-sm text-[#555555]">
                 <input className="mt-1" type="checkbox" />
                 <span>I have read and agree to the privacy policy.</span>
               </label>
@@ -734,16 +770,20 @@ function Home() {
                 </span>
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button
+                <button
+                  className="inline-flex min-h-[42px] items-center justify-center rounded border border-[#06038d] bg-white px-7 py-3 text-[15px] font-bold text-[#06038d] transition-colors hover:bg-[#f4f4ff]"
                   onClick={() => goToStep(4)}
                   type="button"
-                  variant="outline"
                 >
                   Back
-                </Button>
-                <Button onClick={() => setSubmitted(true)} type="button">
+                </button>
+                <button
+                  className="inline-flex min-h-[42px] items-center justify-center rounded bg-[#06038d] px-7 py-3 text-[15px] font-bold text-white transition-colors hover:bg-[#04026b]"
+                  onClick={() => setSubmitted(true)}
+                  type="button"
+                >
                   Submit your registration
-                </Button>
+                </button>
               </div>
               {submitted && (
                 <div className="mt-5 rounded-lg bg-[#e8f5e9] px-5 py-4 font-semibold text-[#2e7d32]">
@@ -993,6 +1033,61 @@ function ProductSummary({ contactInfo }: { contactInfo?: ContactInfo | null }) {
   )
 }
 
+function ConfirmationSummary({
+  contactInfo,
+  purchaseDate,
+  purchaseDetail,
+  purchaseSource,
+}: {
+  contactInfo?: ContactInfo | null
+  purchaseDate: string
+  purchaseDetail: string
+  purchaseSource: PurchaseSource
+}) {
+  const email = contactInfo?.email || 'ethen@gmail.com'
+  const contactName = contactInfo?.name || 'Giant Member'
+  const purchaseLocation =
+    purchaseSource === 'elsewhere'
+      ? `Other: ${purchaseDetail || 'Online marketplace'}`
+      : 'Giant authorized retailer'
+
+  return (
+    <section className="max-w-[560px] rounded-[6px] bg-[#f5f5f7] px-6 py-5 text-[14px] leading-6 text-[#222222]">
+      <SummarySection title="Product">
+        <p>Serial: G1LA00961</p>
+      </SummarySection>
+      <SummarySection title="Giant ID">
+        <p>Logged in as {email}</p>
+      </SummarySection>
+      <SummarySection title="Contact">
+        <p>{contactName}</p>
+        <p className="mt-4">{email}</p>
+      </SummarySection>
+      <SummarySection title="Point of purchase">
+        <p>{purchaseLocation}</p>
+        <p>Purchase date: {purchaseDate}</p>
+      </SummarySection>
+    </section>
+  )
+}
+
+function SummarySection({
+  children,
+  title,
+}: {
+  children: React.ReactNode
+  title: string
+}) {
+  return (
+    <div className="not-first:mt-4">
+      <h3 className="mb-1 text-[13px] font-extrabold tracking-[0.04em] text-[#777777] uppercase">
+        {title}
+      </h3>
+      <div>{children}</div>
+    </div>
+  )
+}
+
 function RegistrationStep({
   activeStep,
   children,
@@ -1050,31 +1145,64 @@ function FormLabel({ label }: { label: string }) {
   )
 }
 
-function TextField({ label, type = 'text' }: { label: string; type?: string }) {
+function TextField({
+  label,
+  onChange,
+  type = 'text',
+  value,
+}: {
+  label: string
+  onChange?: ChangeEventHandler<HTMLInputElement>
+  type?: string
+  value?: string
+}) {
   return (
     <div>
       <FormLabel label={label} />
-      <input className="registration-input" type={type} />
+      <input
+        className="registration-input"
+        onChange={onChange}
+        type={type}
+        value={value}
+      />
+    </div>
+  )
+}
+
+function FileField({ label }: { label: string }) {
+  return (
+    <div>
+      <FormLabel label={label} />
+      <input
+        className="block text-[14px] text-[#333333] file:mr-2 file:rounded-[2px] file:border file:border-[#888888] file:bg-[#efefef] file:px-2 file:py-1 file:text-[14px] file:text-[#111111] file:transition-colors hover:file:bg-[#e4e4e4]"
+        type="file"
+      />
     </div>
   )
 }
 
 function RadioRow({
-  defaultChecked,
+  checked,
   label,
   name,
+  onChange,
+  value,
 }: {
-  defaultChecked?: boolean
+  checked: boolean
   label: string
   name: string
+  onChange: () => void
+  value: string
 }) {
   return (
     <label className="flex items-center gap-4 text-[15px] leading-6 text-[#333333]">
       <input
         className="size-[18px] accent-[#1677ff]"
-        defaultChecked={defaultChecked}
+        checked={checked}
         name={name}
+        onChange={onChange}
         type="radio"
+        value={value}
       />
       <span>{label}</span>
     </label>
